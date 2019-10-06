@@ -4,8 +4,10 @@ var CIRCLE_CENTERX = 300;
 var CIRCLE_CENTERY = 300;
 var CLASS_NAME = "";
 var DATASET = "iris.csv"
+
 generatePlot(DATASET);
 
+// on change of dataset selection from dropdown
 function onDataSetChange() {
     dataset_selected = document.getElementById("csvSelector").selectedIndex;
     if(dataset_selected == 0){
@@ -18,17 +20,49 @@ function onDataSetChange() {
         DATASET = "winequality-white.csv";
     }
 
-    svg_container = d3.select("svg").remove();
-
+    d3.select("svg").remove();
     this.generatePlot(DATASET);
 }
 
+//display anchors checkboxes
+function displayanchors(columns) {
+    // remove existing checkboxes
+    d3.selectAll("input").remove();
+    d3.selectAll("text").remove();
+
+    // add checkbox
+    for(i=0; i<columns.length-1;i++) {
+        id = "id_" + columns[i];       
+
+        // add checkbox
+        d3.select("#svgcontainer")
+        .append("input")
+        .attr("type", "checkbox")
+        .attr("id", id)
+        .attr("checked", true)
+        .attr("onchange", "onAnchorSetChange()")
+        .style("zoom", "2.0");
+
+         //add label
+         d3.select("#svgcontainer")
+         .append("text")
+         .text(columns[i]);
+    }
+}
+
+// on change of anchors selection from checkbox
+function onAnchorSetChange(){
+}
+
+// generate Radviz
 function generatePlot(DATASET) {
     // load csv
     d3.csv(DATASET).then(function(data) {
 
     columns = data.columns;
-        
+
+    displayanchors(columns);
+
     console.log("data: " , data);    
 
     // parse and convert strings to numbers except last column
@@ -174,7 +208,7 @@ var tooltip = d3.select("#svgcontainer")
 
 svg_container = d3.select("svg")
 svg_container.selectAll("circle")
-.enter()
+            .enter()
             .on("mouseover", mouseover )
             .on("mousemove", mousemove )
             .on("mouseleave", mouseleave );
