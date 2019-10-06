@@ -144,7 +144,7 @@ function generatePlot(DATASET) {
 
         anchor_positions = this.plotAnchors(anchors);
         this.plotInstances(data, anchor_positions);
-        //this.addToolTip();
+        this.addToolTip();
     });
 }
 
@@ -222,51 +222,23 @@ this.plotInstances = function(data, anchor_positions) {
         circle = svg_container.append("circle")
                                 .attr("cx", v_posX)
                                 .attr("cy", v_posY)
-                                .attr("r", 2)
+                                .attr("r", 6)
                                 .attr("class", "plotcircles")
                                 .attr("fill", 
-                                  dict_classes_colors[vector[CLASS_NAME]]);                  
+                                  dict_classes_colors[vector[CLASS_NAME]]);  
+                    
+        // add tool tip to all data plots                                  
+        circle.append("svg:title")
+             .text(this.addToolTip(vector));
     });
 }
 
 // add tool tip for each instance
-this.addToolTip = function() {
-    var tooltip = d3.select("#svgcontainer")
-        .append("div")
-        .style("opacity", 0)
-        .attr("class", "tooltip")
-        .style("background-color", "white")
-        .style("border", "solid")
-        .style("border-width", "1px")
-        .style("border-radius", "5px")
-        .style("padding", "10px");
-
-    svg_container = d3.select("svg")
-    svg_container.selectAll("circle")
-                .enter()
-                .on("mouseover", mouseover )
-                .on("mousemove", mousemove )
-                .on("mouseleave", mouseleave );
-
-    var mouseover = function() {
-                    tooltip
-                    .style("opacity", 1)
-                }
-                
-    var mousemove = function() {
-        tooltip
-        .html("The exact value of<br>the Ground Living area is: ")
-        .style("left", (d3.mouse(this)[0]+90) + "px") // It is important to put the +90: other wise the tooltip is exactly where the point is an it creates a weird effect
-        .style("top", (d3.mouse(this)[1]) + "px")
-    }
-
-    // A function that change this tooltip when the leaves a point: just need to set opacity to 0 again
-    var mouseleave = function() {
-        tooltip
-        .transition()
-        .duration(200)
-        .style("opacity", 0)
-    }
-
+this.addToolTip = function(vector) {
+   text = "Normalized values to range [0,1]: \n\n";
+   for(key in vector) {
+       text += key + ": " + vector[key] + "\n";
+   }
+   return text;
 }
 
