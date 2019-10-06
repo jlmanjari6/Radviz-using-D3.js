@@ -4,6 +4,7 @@ var CIRCLE_CENTERX = 300;
 var CIRCLE_CENTERY = 300;
 var CLASS_NAME = "";
 var DATASET = "iris.csv"
+var DATA = Object;
 
 generatePlot(DATASET);
 
@@ -31,7 +32,7 @@ function displayanchors(columns) {
     d3.selectAll("text").remove();
 
     // add checkbox
-    for(i=0; i<columns.length-1;i++) {
+    for(i=0; i<columns.length;i++) {
         id = "id_" + columns[i];       
 
         // add checkbox
@@ -39,8 +40,9 @@ function displayanchors(columns) {
         .append("input")
         .attr("type", "checkbox")
         .attr("id", id)
-        .attr("checked", true)
+        .attr("name", "checkboxes")
         .attr("onchange", "onAnchorSetChange()")
+        .attr("checked", true)  
         .style("zoom", "2.0");
 
          //add label
@@ -50,75 +52,105 @@ function displayanchors(columns) {
     }
 }
 
+
 // on change of anchors selection from checkbox
-function onAnchorSetChange(){
+function onAnchorSetChange(){    
+    eleList = document.getElementsByName("checkboxes");
+    columnList = [];
+    for(i=0; i<eleList.length; i++) {        
+        if(eleList[i].checked) {
+            id = eleList[i].id;
+            columnName = id.substring(3); // extracting column names from ids
+            columnList.push(columnName);
+        }
+    }
+    if(columnList.length < 3) {
+        d3.select("#warningmessage").remove();//removing existing warning messages
+
+        d3.select("#svgcontainer")
+        .append("text")
+        .attr("id", "warningmessage")
+        .text("Please select a minimum of three anchors!");
+    }
+    else {
+        d3.select("#warningmessage").remove(); //removing existing warning messages
+        d3.selectAll(".plotcircles").remove(); //removing existing plot anchors and data points
+        anchor_positions = this.plotAnchors(columnList); //to plot new anchors
+        this.plotInstances(DATA, anchor_positions); //to plot data points by anchor positions
+    }
+    console.log(columnList);
 }
 
 // generate Radviz
 function generatePlot(DATASET) {
     // load csv
     d3.csv(DATASET).then(function(data) {
+        DATA = data;
+        columns = data.columns;
 
-    columns = data.columns;
+        anchors = [];
+        for(i=0; i<columns.length-1; i++) {
+            anchors.push(columns[i]);
+        }
 
-    displayanchors(columns);
+        displayanchors(anchors);
 
-    console.log("data: " , data);    
+        console.log("data: " , data);    
 
-    // parse and convert strings to numbers except last column
-    data.forEach(function(vector){    
-        count=columns.length-1;
-        for(key in vector){        
-            if(count == 0){
-                CLASS_NAME = key; //assigning class name
-                break;
-            }
-            vector[key] = +vector[key];        
-            count--;
-        }        
-    }); 
+        // parse and convert strings to numbers except last column
+        data.forEach(function(vector){    
+            count=columns.length-1;
+            for(key in vector){        
+                if(count == 0){
+                    CLASS_NAME = key; //assigning class name
+                    break;
+                }
+                vector[key] = +vector[key];        
+                count--;
+            }        
+        }); 
 
-    // normalize all columns except last column to a range of 0 and 1
-    dict_scalefunction = {};
-    for(i=0; i<columns.length-1; i++) {    
-        max = d3.max(data, function(d) { return d[columns[i]]; });
-        min = d3.min(data, function(d) { return d[columns[i]]; });
-        func = d3.scaleLinear().domain([min,max]);
-        dict_scalefunction[columns[i]] = func;
-    }
-    data.forEach(function(vector){    
-        for(key in vector){    
-            if(key != CLASS_NAME) {    
-                vector[key] = dict_scalefunction[key](vector[key]);  
-            }
-        }        
-    }); 
+        // normalize all columns except last column to a range of 0 and 1
+        dict_scalefunction = {};
+        for(i=0; i<columns.length-1; i++) {    
+            max = d3.max(data, function(d) { return d[columns[i]]; });
+            min = d3.min(data, function(d) { return d[columns[i]]; });
+            func = d3.scaleLinear().domain([min,max]);
+            dict_scalefunction[columns[i]] = func;
+        }
+        data.forEach(function(vector){    
+            for(key in vector){    
+                if(key != CLASS_NAME) {    
+                    vector[key] = dict_scalefunction[key](vector[key]);  
+                }
+            }        
+        }); 
 
-    console.log("converted data: " , data);
+        console.log("converted data: " , data);
 
-    // arrange svg canvas
-    svg_container = d3.select("#svgcontainer")
-                        .append("svg")
-                        .attr("width", 1000)
-                        .attr("height", 600);
+        // arrange svg canvas
+        svg_container = d3.select("#svgcontainer")
+                            .append("svg")
+                            .attr("width", 1000)
+                            .attr("height", 600);
 
-    // draw circle
-    svg_container.append("circle")
-                .attr("cx", this.CIRCLE_CENTERX)
-                .attr("cy", this.CIRCLE_CENTERY)
-                .attr("r", this.CIRCLE_RADIUS)
-                .attr("fill", "white")
-                .attr("stroke", "black");
+        // draw circle
+        svg_container.append("circle")
+                    .attr("cx", this.CIRCLE_CENTERX)
+                    .attr("cy", this.CIRCLE_CENTERY)
+                    .attr("r", this.CIRCLE_RADIUS)
+                    .attr("fill", "white")
+                    .attr("stroke", "black");
 
-    anchor_positions = this.plotAnchors(columns);
-    this.plotInstances(data, anchor_positions);
-    //this.addToolTip();
+        anchor_positions = this.plotAnchors(anchors);
+        this.plotInstances(data, anchor_positions);
+        //this.addToolTip();
     });
 }
 
 // plot anchors on circle
 plotAnchors = function(columns) {
-    anchors_count = columns.length - 1;
+    anchors_count = columns.length;
 
     var anchors_positions = {};
 
@@ -140,12 +172,14 @@ plotAnchors = function(columns) {
                                 .attr("cx", anchor_posX)
                                 .attr("cy", anchor_posY)
                                 .attr("r", 5)
+                                .attr("class", "plotcircles")
                                 .attr("fill", "red");
         
         // add text for each anchor                        
         svg_container.append("text")
                     .attr("x", anchor_posX + 6)
                     .attr("y", anchor_posY + 6)
+                    .attr("class", "plotcircles")
                     .text(columns[i]);
 
       }
@@ -189,6 +223,7 @@ this.plotInstances = function(data, anchor_positions) {
                                 .attr("cx", v_posX)
                                 .attr("cy", v_posY)
                                 .attr("r", 2)
+                                .attr("class", "plotcircles")
                                 .attr("fill", 
                                   dict_classes_colors[vector[CLASS_NAME]]);                  
     });
@@ -196,41 +231,42 @@ this.plotInstances = function(data, anchor_positions) {
 
 // add tool tip for each instance
 this.addToolTip = function() {
-var tooltip = d3.select("#svgcontainer")
-    .append("div")
-    .style("opacity", 0)
-    .attr("class", "tooltip")
-    .style("background-color", "white")
-    .style("border", "solid")
-    .style("border-width", "1px")
-    .style("border-radius", "5px")
-    .style("padding", "10px");
+    var tooltip = d3.select("#svgcontainer")
+        .append("div")
+        .style("opacity", 0)
+        .attr("class", "tooltip")
+        .style("background-color", "white")
+        .style("border", "solid")
+        .style("border-width", "1px")
+        .style("border-radius", "5px")
+        .style("padding", "10px");
 
-svg_container = d3.select("svg")
-svg_container.selectAll("circle")
-            .enter()
-            .on("mouseover", mouseover )
-            .on("mousemove", mousemove )
-            .on("mouseleave", mouseleave );
+    svg_container = d3.select("svg")
+    svg_container.selectAll("circle")
+                .enter()
+                .on("mouseover", mouseover )
+                .on("mousemove", mousemove )
+                .on("mouseleave", mouseleave );
 
-var mouseover = function() {
-                tooltip
-                  .style("opacity", 1)
-              }
-            
-var mousemove = function() {
-    tooltip
-      .html("The exact value of<br>the Ground Living area is: ")
-      .style("left", (d3.mouse(this)[0]+90) + "px") // It is important to put the +90: other wise the tooltip is exactly where the point is an it creates a weird effect
-      .style("top", (d3.mouse(this)[1]) + "px")
+    var mouseover = function() {
+                    tooltip
+                    .style("opacity", 1)
+                }
+                
+    var mousemove = function() {
+        tooltip
+        .html("The exact value of<br>the Ground Living area is: ")
+        .style("left", (d3.mouse(this)[0]+90) + "px") // It is important to put the +90: other wise the tooltip is exactly where the point is an it creates a weird effect
+        .style("top", (d3.mouse(this)[1]) + "px")
+    }
+
+    // A function that change this tooltip when the leaves a point: just need to set opacity to 0 again
+    var mouseleave = function() {
+        tooltip
+        .transition()
+        .duration(200)
+        .style("opacity", 0)
+    }
+
 }
 
-  // A function that change this tooltip when the leaves a point: just need to set opacity to 0 again
-var mouseleave = function() {
-    tooltip
-      .transition()
-      .duration(200)
-      .style("opacity", 0)
-}
-
-}
