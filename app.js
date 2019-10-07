@@ -225,7 +225,8 @@ this.plotInstances = function(data, anchor_positions) {
                                 .attr("r", 6)
                                 .attr("class", "plotcircles")
                                 .attr("fill", 
-                                  dict_classes_colors[vector[CLASS_NAME]]);  
+                                  dict_classes_colors[vector[CLASS_NAME]])
+                                .attr("stroke", "black")  ;  
                     
         // add tool tip to all data plots                                  
         circle.append("svg:title")
