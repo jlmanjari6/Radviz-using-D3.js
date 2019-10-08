@@ -6,12 +6,11 @@
         <link rel="stylesheet" href="style.css">       
     </head>
     <body>
-            <div id = "svgcontainer">
-                Select dataset:  <select id="csvSelector" onchange="onDataSetChange()">
-                    <option value="iris">Iris</option>
-                    <option value="wine-red">wine quality - red</option>
-                    <option value="wine-white">wine quality - white</option>
-                </select> <br>
+            <div id = "svgcontainer">             
+               <b>Please upload dataset to generate RadViz! <br><br>
+               <input id="fileUpload" type="file">            
+                <input id="uploadBtn" type="submit" value="Upload" onclick="onFileUploadBtnClick()"> </b>
+                <br><br>
             </div>
             <script src="https://d3js.org/d3.v5.min.js"></script>
             <script src="app.js"></script>
