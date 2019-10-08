@@ -64,6 +64,7 @@ function onAnchorSetChange(){
         if(eleList[i].checked) {
             id = eleList[i].id;
             columnName = id.substring(3); // extracting column names from ids
+            columnName = columnName.replace(/[- )(]/g,'')
             columnList.push(columnName);
         }
     }
@@ -78,6 +79,7 @@ function onAnchorSetChange(){
     else {
         d3.select("#warningmessage").remove(); //removing existing warning messages
         d3.selectAll(".plotcircles").remove(); //removing existing plot anchors and data points
+        d3.selectAll(".plotAnchors").remove();
         anchor_positions = this.plotAnchors(columnList, false); //to plot new anchors
         this.plotInstances(DATA, anchor_positions); //to plot data points by anchor positions
     }    
@@ -172,7 +174,8 @@ plotAnchors = function(columns, isDragged) {
 
             // saving anchors along with their positions in dictionary                    
             positions = [anchor_posX, anchor_posY];
-            anchor_name = columns[i];
+            anchor_name = columns[i].replace(/[- )(]/g,'')
+            // anchor_name = columns[i];
             anchors_positions[anchor_name] = positions;
             
             // draw anchors on circle
@@ -181,8 +184,9 @@ plotAnchors = function(columns, isDragged) {
                                     .attr("cx", anchor_posX)
                                     .attr("cy", anchor_posY)
                                     .attr("r", 8)
-                                    .attr("class", "plotcircles")
+                                    .attr("class", "plotAnchors")
                                     .attr("fill", "red")
+                                    .attr("id", anchor_name)
                                     .call(d3.drag()
                                     .on('start', dragstarted)
                                     .on('drag', dragged)
@@ -193,7 +197,8 @@ plotAnchors = function(columns, isDragged) {
             svg_container.append("text")
                         .attr("x", anchor_posX + 10)
                         .attr("y", anchor_posY + 10)
-                        .attr("class", "plotcircles")
+                        .attr("id", anchor_name)
+                        .attr("class", "plotAnchors")
                         .text(columns[i]);
 
         }
@@ -216,15 +221,15 @@ this.plotInstances = function(data, anchor_positions) {
     }
 
     // loop through each row and plot each instance with color based on class
-    row = 0;
+    row = 0;    
     data.forEach(function(vector){
         sum_upper_X = 0;
         sum_upper_Y = 0;
-        sum_lower = 0;
-
+        sum_lower = 0;                
         for(key in vector) {
-            if(anchor_positions[key] != undefined) {
-                a_pos = anchor_positions[key];
+            anchor = key.replace(/[- )(]/g,'')
+            if(anchor_positions[anchor] != undefined) {
+                a_pos = anchor_positions[anchor];
                 value = vector[key];
                 
                 sum_upper_X += (a_pos[0] * value);
@@ -270,42 +275,51 @@ this.addToolTip = function(vector, row) {
    return text;
 }
 
-// dragstarted, dragged, dragended
 function dragstarted(d){ 
-    d3.select(this).raise().classed('active', true);
-    console.log("drag started");
-    
+    d3.select(this).raise().classed('active', true);    
 }
 function dragended(d){ 
-    d3.select(this).classed('active', false);
-    d3.select(this).attr('stroke-width', 0);
-    console.log("drag ended");
+    d3.select(this).classed('active', false);    
 }
 function dragged(d, i) {
-    d3.select(this).raise().classed('active', true);
-    console.log("dragged");
+    d3.select(this).raise().classed('active', true);    
    
     cursorX = d3.event.x;
     cursorY = d3.event.y;
     distance = Math.sqrt(Math.pow((cursorX-CIRCLE_CENTERX),2) 
                         + Math.pow((cursorY-CIRCLE_CENTERY) ,2));
-
-                        console.log(distance, ", ", CIRCLE_RADIUS);
-    if(Math.abs(distance - CIRCLE_RADIUS) <= 3) {                        
-    // redraw the dimensional anchor and the label
-    d3.selectAll(".plotcircles").remove();                        
-    svg_container = d3.select("svg")
-    circle = svg_container.append("circle")
-                            .attr("cx", d3.event.x )
-                            .attr("cy", d3.event.y )
-                            .attr("r", 8)
-                            .attr("class", "plotcircles")
-                            .attr("fill", "red")
-                            .call(d3.drag()
-                            .on('start', dragstarted)
-                            .on('drag', dragged)
-                            .on('end', dragended)
-                        );
                         
+    if(Math.abs(distance - CIRCLE_RADIUS) <= 3) {                       
+        // redraw the dimensional anchor and the label  
+        currentId = d3.select(this).attr("id");
+        txt = d3.select("text#" + currentId).text();        
+        d3.selectAll("#"+currentId).remove();  
+        svg_container = d3.select("svg")
+        circle = svg_container.append("circle")
+                                .attr("cx", d3.event.x )
+                                .attr("cy", d3.event.y )
+                                .attr("r", 8)
+                                .attr("id", currentId)
+                                .attr("class", "plotAnchors")
+                                .attr("fill", "red")
+                                .call(d3.drag()
+                                .on('start', dragstarted)
+                                .on('drag', dragged)
+                                .on('end', dragended)
+                                );
+        // add text for each anchor                        
+        svg_container.append("text")
+        .attr("x", d3.event.x + 10)
+        .attr("y", d3.event.y + 10)
+        .attr("id", currentId)
+        .attr("class", "plotAnchors")
+        .text(txt);
+        for(key in anchor_positions) {
+            if(key == currentId) {
+                anchor_positions[key] = [d3.event.x, d3.event.y];
+                d3.selectAll(".plotcircles").remove();
+                plotInstances(DATA, anchor_positions);
+            }
+        }                  
     }    
 }
