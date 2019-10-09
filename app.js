@@ -81,7 +81,7 @@ function onAnchorSetChange(){
         d3.selectAll(".plotcircles").remove(); //removing existing plot anchors and data points
         d3.selectAll(".plotAnchors").remove();
         anchor_positions = this.plotAnchors(columnList, false); //to plot new anchors
-        this.plotInstances(DATA, anchor_positions); //to plot data points by anchor positions
+        this.plotInstances(DATA, anchor_positions, false); //to plot data points by anchor positions
     }    
 }
 
@@ -150,13 +150,13 @@ function generatePlot(data) {
                     .attr("stroke", "black");
 
     anchor_positions = this.plotAnchors(anchors, false);
-    this.plotInstances(data, anchor_positions);
+    this.plotInstances(data, anchor_positions, false);
     this.addToolTip();
     
 }
 
 // plot anchors on circle
-plotAnchors = function(columns, isDragged) {
+plotAnchors = function(columns, isDragged) {    
     if(!isDragged) {
         anchors_count = columns.length;
         var anchors_positions = {};
@@ -208,14 +208,16 @@ plotAnchors = function(columns, isDragged) {
 }
 
 // plot instances 
-this.plotInstances = function(data, anchor_positions) {
+this.plotInstances = function(data, anchor_positions, isDragged) {
 
-    // define a unique color for each class
-    classes = d3.map(data, function(d){return d[CLASS_NAME];}).keys();
-    colors = d3.scaleOrdinal(d3.schemeCategory10).range();
-    dict_classes_colors = {};    
-    for(i=0; i<classes.length; i++) {        
-        dict_classes_colors[classes[i]] = colors[i];
+    if(!isDragged) {
+        // define a unique color for each class
+        classes = d3.map(data, function(d){return d[CLASS_NAME];}).keys();
+        colors = d3.scaleOrdinal(d3.schemeCategory10).range();
+        dict_classes_colors = {};    
+        for(i=0; i<classes.length; i++) {        
+            dict_classes_colors[classes[i]] = colors[i];
+        }
     }
 
     // loop through each row and plot each instance with color based on class
@@ -246,7 +248,7 @@ this.plotInstances = function(data, anchor_positions) {
                                 .attr("cx", v_posX)
                                 .attr("cy", v_posY)
                                 .attr("r", 6)
-                                .attr("class", "plotcircles")
+                                .attr("class", "plotcircles")                                
                                 .attr("fill", 
                                   dict_classes_colors[vector[CLASS_NAME]])
                                 .attr("stroke", "black")  ;  
@@ -278,10 +280,10 @@ this.addToolTip = function(vector, row) {
 function startDragging(d){ 
     d3.select(this).raise().classed('active', true);    
 }
-function dragging(d){ 
+function endDragging(d){ 
     d3.select(this).classed('active', false);    
 }
-function endDragging(d, i) {    
+function dragging(d, i) {    
     d3.select(this).raise().classed('active', true);    
    
     cursorX = d3.event.x;
@@ -297,13 +299,12 @@ function endDragging(d, i) {
                                                   
     currentId = d3.select(this).attr("id");
     txt = d3.select("text#" + currentId).text();  
-    d3.selectAll("text#"+currentId).remove();  //remove existing anchor label
 
     //drag anchor to new position
     d3.select(this).attr("cx", d.x = newPosX).attr("cy", d.y = newPosY);
 
-    // add label for anchor while dragging                        
-    svg_container.append("text")
+    // drag anchor label to new position                        
+    d3.select("#" + currentId)
                 .attr("x", newPosX + 10)
                 .attr("y", newPosY + 10)
                 .attr("id", currentId)
@@ -313,7 +314,7 @@ function endDragging(d, i) {
         if(key == currentId) {
             anchor_positions[key] = [cursorX, cursorY];
             d3.selectAll(".plotcircles").remove();
-            plotInstances(DATA, anchor_positions);
+            plotInstances(DATA, anchor_positions, true);
         }
     }                    
 }

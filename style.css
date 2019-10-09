@@ -1,0 +1,13 @@
+#fileUpload {
+font-size: 18px;
+background-color:chocolate;
+color: white;
+border-radius: 25px;
+}
+
+#uploadBtn {    
+    font-size: 18px;
+    width: 120px;
+    height: 30px;
+    border-radius: 25px;
+}
