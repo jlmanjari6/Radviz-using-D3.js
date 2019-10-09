@@ -3,7 +3,7 @@ var CIRCLE_RADIUS = 250;
 var CIRCLE_CENTERX = 300;
 var CIRCLE_CENTERY = 300;
 var CLASS_NAME = "";
-var DATASET = "winequality-red.csv"
+var DATASET = "winequality-red.csv" //for default dataset on page load
 var DATA = Object;
 var arrOriginalNormalizedVal = [];
 
@@ -49,7 +49,7 @@ function displayanchors(columns) {
         .style("zoom", "2.0");
 
          //add label
-         d3.select("#svgcontainer")
+        d3.select("#svgcontainer")
          .append("text")
          .text(columns[i]);
     }
@@ -88,70 +88,70 @@ function onAnchorSetChange(){
 // generate Radviz
 function generatePlot(data) {
     // load csv   
-        DATA = data;
-        columns = data.columns;
+    DATA = data;
+    columns = data.columns;
 
-        anchors = [];
-        for(i=0; i<columns.length-1; i++) {
-            anchors.push(columns[i]);
-        }
+    anchors = [];
+    for(i=0; i<columns.length-1; i++) {
+        anchors.push(columns[i]);
+    }
 
-        displayanchors(anchors);         
+    displayanchors(anchors);         
 
-        // parse and convert strings to numbers except last column
-        data.forEach(function(vector){    
-            count=columns.length-1;
-            for(key in vector){        
-                if(count == 0){
-                    CLASS_NAME = key; //assigning class name
-                    break;
-                }
-                vector[key] = +vector[key];        
-                count--;
-            }        
-        }); 
-
-        // normalize all columns except last column to a range of 0 and 1
-        arrOriginalNormalizedVal = [];
-        dictScaleFunction = {}; //dic of column name, scale function
-        for(i=0; i<columns.length-1; i++) {    
-            max = d3.max(data, function(d) { return d[columns[i]]; });
-            min = d3.min(data, function(d) { return d[columns[i]]; });
-            func = d3.scaleLinear().domain([min,max]);
-            dictScaleFunction[columns[i]] = func;
-        }
-        row = 0;
-        data.forEach(function(vector){    //replacing original values with normalized values
-            arrVectorTemp = [];
-            i = 0;
-            for(key in vector){    
-                arrVectorTemp[i] = vector[key];
-                if(key != CLASS_NAME) {                                                              
-                    vector[key] = dictScaleFunction[key](vector[key]); //passing each cell value to scale function                    
-                    i++;
-                }
+    // parse and convert strings to numbers except last column
+    data.forEach(function(vector){    
+        count=columns.length-1;
+        for(key in vector){        
+            if(count == 0){
+                CLASS_NAME = key; //assigning class name
+                break;
             }
-            arrOriginalNormalizedVal[row] = arrVectorTemp; 
-            row++;       
-        });         
+            vector[key] = +vector[key];        
+            count--;
+        }        
+    }); 
 
-        // arrange svg canvas
-        svg_container = d3.select("#svgcontainer")
-                            .append("svg")
-                            .attr("width", 1000)
-                            .attr("height", 600);
+    // normalize all columns except last column to a range of 0 and 1
+    arrOriginalNormalizedVal = [];
+    dictScaleFunction = {}; //dic of column name, scale function
+    for(i=0; i<columns.length-1; i++) {    
+        max = d3.max(data, function(d) { return d[columns[i]]; });
+        min = d3.min(data, function(d) { return d[columns[i]]; });
+        func = d3.scaleLinear().domain([min,max]);
+        dictScaleFunction[columns[i]] = func;
+    }
+    row = 0;
+    data.forEach(function(vector){    //replacing original values with normalized values
+        arrVectorTemp = [];
+        i = 0;
+        for(key in vector){    
+            arrVectorTemp[i] = vector[key];
+            if(key != CLASS_NAME) {                                                              
+                vector[key] = dictScaleFunction[key](vector[key]); //passing each cell value to scale function                    
+                i++;
+            }
+        }
+        arrOriginalNormalizedVal[row] = arrVectorTemp; 
+        row++;       
+    });         
+
+    // arrange svg canvas
+    svg_container = d3.select("#svgcontainer")
+                        .append("svg")
+                        .attr("width", 1000)
+                        .attr("height", 600);
 
         // draw circle
-        svg_container.append("circle")
+    svg_container.append("circle")
                     .attr("cx", this.CIRCLE_CENTERX)
                     .attr("cy", this.CIRCLE_CENTERY)
                     .attr("r", this.CIRCLE_RADIUS)
                     .attr("fill", "white")
                     .attr("stroke", "black");
 
-        anchor_positions = this.plotAnchors(anchors, false);
-        this.plotInstances(data, anchor_positions);
-        this.addToolTip();
+    anchor_positions = this.plotAnchors(anchors, false);
+    this.plotInstances(data, anchor_positions);
+    this.addToolTip();
     
 }
 
@@ -189,9 +189,9 @@ plotAnchors = function(columns, isDragged) {
                                     .attr("fill", "red")
                                     .attr("id", anchor_name)                                    
                                     .call(d3.drag()
-                                    .on('start', dragstarted)
-                                    .on('drag', dragged)
-                                    .on('end', dragended)
+                                    .on('start', startDragging)
+                                    .on('drag', dragging)
+                                    .on('end', endDragging)
                                 );
             
             // add text for each anchor                        
@@ -263,9 +263,10 @@ this.addToolTip = function(vector, row) {
    text = "";
    arrTemp = arrOriginalNormalizedVal[row];
    i = 0;
-   for(key in vector) {
-       if(i == arrTemp.length-1) {
-           text += "\n";
+   for(key in vector) {      
+       if(key == this.CLASS_NAME) {
+           text +=  "\n";
+           key = key.toUpperCase();           
        }
        text += key + ": " + arrTemp[i] + "\n";       
        i++;
@@ -274,16 +275,13 @@ this.addToolTip = function(vector, row) {
    return text;
 }
 
-function dragstarted(d){ 
-    console.log(d);
+function startDragging(d){ 
     d3.select(this).raise().classed('active', true);    
 }
-function dragended(d){ 
-    console.log(d);
+function dragging(d){ 
     d3.select(this).classed('active', false);    
 }
-function dragged(d, i) {    
-    console.log(d);
+function endDragging(d, i) {    
     d3.select(this).raise().classed('active', true);    
    
     cursorX = d3.event.x;
@@ -297,29 +295,25 @@ function dragged(d, i) {
     newPosX = CIRCLE_CENTERX + (CIRCLE_RADIUS * Math.cos(angle)); 
     newPosY = CIRCLE_CENTERY + (CIRCLE_RADIUS * Math.sin(angle));
                                                   
-        currentId = d3.select(this).attr("id");
-        txt = d3.select("text#" + currentId).text();  //remove existing anchor label
-        
-        //remove existing anchor point and corresponding label 
-        //before adding them to new mouse positions while dragging
-        d3.selectAll("text#"+currentId).remove();  
+    currentId = d3.select(this).attr("id");
+    txt = d3.select("text#" + currentId).text();  
+    d3.selectAll("text#"+currentId).remove();  //remove existing anchor label
 
-        //drag anchor to new position
-        d3.select(this).attr("cx", d.x = newPosX).attr("cy", d.y = newPosY);
+    //drag anchor to new position
+    d3.select(this).attr("cx", d.x = newPosX).attr("cy", d.y = newPosY);
 
-        // add label for anchor while dragging                        
-        svg_container.append("text")
-        .attr("x", newPosX + 10)
-        .attr("y", newPosY + 10)
-        .attr("id", currentId)
-        .attr("class", "plotAnchors")
-        .text(txt);
-        for(key in anchor_positions) {
-            if(key == currentId) {
-                anchor_positions[key] = [cursorX, cursorY];
-                d3.selectAll(".plotcircles").remove();
-                plotInstances(DATA, anchor_positions);
-            }
-        }                  
-      
+    // add label for anchor while dragging                        
+    svg_container.append("text")
+                .attr("x", newPosX + 10)
+                .attr("y", newPosY + 10)
+                .attr("id", currentId)
+                .attr("class", "plotAnchors")
+                .text(txt);
+    for(key in anchor_positions) {
+        if(key == currentId) {
+            anchor_positions[key] = [cursorX, cursorY];
+            d3.selectAll(".plotcircles").remove();
+            plotInstances(DATA, anchor_positions);
+        }
+    }                    
 }
