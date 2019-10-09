@@ -183,10 +183,11 @@ plotAnchors = function(columns, isDragged) {
             circle = svg_container.append("circle")
                                     .attr("cx", anchor_posX)
                                     .attr("cy", anchor_posY)
+                                    .data([ {"x":anchor_posX, "y":anchor_posY} ])
                                     .attr("r", 8)
                                     .attr("class", "plotAnchors")
                                     .attr("fill", "red")
-                                    .attr("id", anchor_name)
+                                    .attr("id", anchor_name)                                    
                                     .call(d3.drag()
                                     .on('start', dragstarted)
                                     .on('drag', dragged)
@@ -202,9 +203,6 @@ plotAnchors = function(columns, isDragged) {
                         .text(columns[i]);
 
         }
-    }
-    else {
-
     }
       return anchors_positions;
 }
@@ -277,44 +275,42 @@ this.addToolTip = function(vector, row) {
 }
 
 function dragstarted(d){ 
+    console.log(d);
     d3.select(this).raise().classed('active', true);    
 }
 function dragended(d){ 
+    console.log(d);
     d3.select(this).classed('active', false);    
 }
 function dragged(d, i) {    
+    console.log(d);
     d3.select(this).raise().classed('active', true);    
    
     cursorX = d3.event.x;
     cursorY = d3.event.y;
-    distance = Math.sqrt(Math.pow((cursorX-CIRCLE_CENTERX),2) 
-                        + Math.pow((cursorY-CIRCLE_CENTERY) ,2));
-                        
-    if(Math.abs(distance - CIRCLE_RADIUS) <= 3) {                               
+   
+    deltaX = cursorX-CIRCLE_CENTERX;
+    deltaY = cursorY-CIRCLE_CENTERY;
+    angle = Math.atan2(deltaY, deltaX); //finding angle given circle center and mouse position
+
+    // finding point on circle based on circle center, radius and angle
+    newPosX = CIRCLE_CENTERX + (CIRCLE_RADIUS * Math.cos(angle)); 
+    newPosY = CIRCLE_CENTERY + (CIRCLE_RADIUS * Math.sin(angle));
+                                                  
         currentId = d3.select(this).attr("id");
-        txt = d3.select("text#" + currentId).text();  
+        txt = d3.select("text#" + currentId).text();  //remove existing anchor label
         
         //remove existing anchor point and corresponding label 
         //before adding them to new mouse positions while dragging
-        d3.selectAll("#"+currentId).remove();  
+        d3.selectAll("text#"+currentId).remove();  
 
-        svg_container = d3.select("svg")
-        circle = svg_container.append("circle")
-                                .attr("cx", cursorX )
-                                .attr("cy", cursorY )
-                                .attr("r", 8)
-                                .attr("id", currentId)
-                                .attr("class", "plotAnchors")
-                                .attr("fill", "red")
-                                .call(d3.drag()
-                                .on('start', dragstarted)
-                                .on('drag', dragged)
-                                .on('end', dragended)
-                                );
-        // add text for each anchor                        
+        //drag anchor to new position
+        d3.select(this).attr("cx", d.x = newPosX).attr("cy", d.y = newPosY);
+
+        // add label for anchor while dragging                        
         svg_container.append("text")
-        .attr("x", cursorX + 10)
-        .attr("y", cursorY + 10)
+        .attr("x", newPosX + 10)
+        .attr("y", newPosY + 10)
         .attr("id", currentId)
         .attr("class", "plotAnchors")
         .text(txt);
@@ -325,5 +321,5 @@ function dragged(d, i) {
                 plotInstances(DATA, anchor_positions);
             }
         }                  
-    }    
+      
 }
