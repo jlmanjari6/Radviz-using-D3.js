@@ -221,7 +221,8 @@ this.plotInstances = function(data, anchor_positions) {
     }
 
     // loop through each row and plot each instance with color based on class
-    row = 0;    
+    row = 0;
+    
     data.forEach(function(vector){
         sum_upper_X = 0;
         sum_upper_Y = 0;
@@ -281,7 +282,7 @@ function dragstarted(d){
 function dragended(d){ 
     d3.select(this).classed('active', false);    
 }
-function dragged(d, i) {
+function dragged(d, i) {    
     d3.select(this).raise().classed('active', true);    
    
     cursorX = d3.event.x;
@@ -289,15 +290,18 @@ function dragged(d, i) {
     distance = Math.sqrt(Math.pow((cursorX-CIRCLE_CENTERX),2) 
                         + Math.pow((cursorY-CIRCLE_CENTERY) ,2));
                         
-    if(Math.abs(distance - CIRCLE_RADIUS) <= 3) {                       
-        // redraw the dimensional anchor and the label  
+    if(Math.abs(distance - CIRCLE_RADIUS) <= 3) {                               
         currentId = d3.select(this).attr("id");
-        txt = d3.select("text#" + currentId).text();        
+        txt = d3.select("text#" + currentId).text();  
+        
+        //remove existing anchor point and corresponding label 
+        //before adding them to new mouse positions while dragging
         d3.selectAll("#"+currentId).remove();  
+
         svg_container = d3.select("svg")
         circle = svg_container.append("circle")
-                                .attr("cx", d3.event.x )
-                                .attr("cy", d3.event.y )
+                                .attr("cx", cursorX )
+                                .attr("cy", cursorY )
                                 .attr("r", 8)
                                 .attr("id", currentId)
                                 .attr("class", "plotAnchors")
@@ -309,14 +313,14 @@ function dragged(d, i) {
                                 );
         // add text for each anchor                        
         svg_container.append("text")
-        .attr("x", d3.event.x + 10)
-        .attr("y", d3.event.y + 10)
+        .attr("x", cursorX + 10)
+        .attr("y", cursorY + 10)
         .attr("id", currentId)
         .attr("class", "plotAnchors")
         .text(txt);
         for(key in anchor_positions) {
             if(key == currentId) {
-                anchor_positions[key] = [d3.event.x, d3.event.y];
+                anchor_positions[key] = [cursorX, cursorY];
                 d3.selectAll(".plotcircles").remove();
                 plotInstances(DATA, anchor_positions);
             }
