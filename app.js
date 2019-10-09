@@ -35,7 +35,7 @@ function displayanchors(columns) {
 
     // add checkbox
     for(i=0; i<columns.length;i++) {
-        id = "id_" + columns[i];       
+        id = columns[i].replace(/[- )(]/g,'')     
 
         // add checkbox
         d3.select("#svgcontainer")
@@ -51,6 +51,7 @@ function displayanchors(columns) {
          //add label
         d3.select("#svgcontainer")
          .append("text")
+         .attr("id", id)
          .text(columns[i]);
     }
 }
@@ -63,8 +64,7 @@ function onAnchorSetChange(){
     for(i=0; i<eleList.length; i++) {        
         if(eleList[i].checked) {
             id = eleList[i].id;
-            columnName = id.substring(3); // extracting column names from ids
-            columnName = columnName.replace(/[- )(]/g,'')
+            columnName = d3.select("text#" + id).text(); // extracting column names from ids
             columnList.push(columnName);
         }
     }
@@ -189,9 +189,7 @@ plotAnchors = function(columns, isDragged) {
                                     .attr("fill", "red")
                                     .attr("id", anchor_name)                                    
                                     .call(d3.drag()
-                                    .on('start', startDragging)
                                     .on('drag', dragging)
-                                    .on('end', endDragging)
                                 );
             
             // add text for each anchor                        
@@ -277,12 +275,6 @@ this.addToolTip = function(vector, row) {
    return text;
 }
 
-function startDragging(d){ 
-    d3.select(this).raise().classed('active', true);    
-}
-function endDragging(d){ 
-    d3.select(this).classed('active', false);    
-}
 function dragging(d, i) {    
     d3.select(this).raise().classed('active', true);    
    
@@ -304,12 +296,10 @@ function dragging(d, i) {
     d3.select(this).attr("cx", d.x = newPosX).attr("cy", d.y = newPosY);
 
     // drag anchor label to new position                        
-    d3.select("#" + currentId)
+    d3.select("text#" + currentId+".plotAnchors")
                 .attr("x", newPosX + 10)
-                .attr("y", newPosY + 10)
-                .attr("id", currentId)
-                .attr("class", "plotAnchors")
-                .text(txt);
+                .attr("y", newPosY + 10);
+
     for(key in anchor_positions) {
         if(key == currentId) {
             anchor_positions[key] = [cursorX, cursorY];
