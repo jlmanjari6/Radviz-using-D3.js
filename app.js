@@ -11,6 +11,7 @@ document.addEventListener("DOMContentLoaded", function() {
     d3.csv(DATASET).then(function(data) {
         generatePlot(data); // assigning default dataset for initial upload
     });
+
 });
 
 // on choosing file to upload from file upload dialog box
@@ -176,7 +177,6 @@ plotAnchors = function(columns, isDragged) {
             // saving anchors along with their positions in dictionary                    
             positions = [anchor_posX, anchor_posY];
             anchor_name = columns[i].replace(/[- )(]/g,'')
-            // anchor_name = columns[i];
             anchors_positions[anchor_name] = positions;
             
             // draw anchors on circle
@@ -208,7 +208,7 @@ plotAnchors = function(columns, isDragged) {
 
 // plot instances 
 this.plotInstances = function(data, anchor_positions, isDragged) {
-
+   
     if(!isDragged) {
         // define a unique color for each class
         classes = d3.map(data, function(d){return d[CLASS_NAME];}).keys();
@@ -258,7 +258,18 @@ this.plotInstances = function(data, anchor_positions, isDragged) {
              .text(this.addToolTip(vector, row));
         row++;
     });    
+    d3.selectAll(".plotLegend,.plotcircles").transition()
+    .duration(1000)
+    .ease(d3.easeLinear)
+    .style("opacity", d3.select("#range1").property("value")/100)  
+
 }
+d3.select("#range1").on("input", function() {
+    d3.selectAll(".plotLegend,.plotcircles").transition()
+    .duration(1000)
+    .ease(d3.easeLinear)
+    .style("opacity", d3.select("#range1").property("value")/100)
+});
 
 // add tool tip for each instance
 this.addToolTip = function(vector, row) {
@@ -283,10 +294,8 @@ function displayLegend(classes, dict_classes_colors) {
     legendCirclePosY = 85;
     legendTextPosX = 690;
     legendTextPosY = 90;
-console.log(classes);
-console.log(dict_classes_colors);
+
     for(i=0; i<classes.length; i++) {
-        console.log(classes[i]);
         legendCirclePosY += 20;
         legendTextPosY += 20;
     d3.select("svg").append("circle")
@@ -296,7 +305,6 @@ console.log(dict_classes_colors);
                     .attr("class", "plotLegend")
                     .attr("fill", dict_classes_colors[classes[i]])
                     .attr("stroke", "black")
-                    console.log(dict_classes_colors[classes[i]]);
     d3.select("svg").append("text")
                     .attr("x", legendTextPosX)
                     .attr("y", legendTextPosY)
@@ -332,16 +340,9 @@ function dragging(d, i) {
 
     for(key in anchor_positions) {
         if(key == currentId) {
-            anchor_positions[key] = [cursorX, cursorY];
+            anchor_positions[key] = [newPosX, newPosY];
             d3.selectAll(".plotcircles").remove();
             plotInstances(DATA, anchor_positions, true);
         }
     }                    
 }
-
-d3.select("#range1").on("input", function() {
-    d3.selectAll(".plotLegend,.plotcircles").transition()
-    .duration(1000)
-    .ease(d3.easeLinear)
-    .style("opacity", d3.select("#range1").property("value")/100)
-});
