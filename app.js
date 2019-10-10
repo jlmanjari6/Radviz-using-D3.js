@@ -7,6 +7,7 @@ var DATASET = "winequality-red.csv" //for default dataset on page load
 var DATA = Object;
 var arrOriginalNormalizedVal = [];
 
+//on dom loaded - to display RadViz for winequality-red.csv 
 document.addEventListener("DOMContentLoaded", function() {    
     d3.csv(DATASET).then(function(data) {
         generatePlot(data); // assigning default dataset for initial upload
@@ -21,9 +22,9 @@ function onFileUploadBtnClick() {
         var reader = new FileReader();
         reader.readAsText(file, "UTF-8");        
         reader.onload = function (e) {
-            DATA = d3.csvParse(e.target.result);
-            d3.select("svg").remove();
-            generatePlot(DATA);            
+            DATA = d3.csvParse(e.target.result); //to convert contents of file that are in string format to array 
+            d3.select("svg").remove(); //removes existing plot
+            generatePlot(DATA); //generate new plot
         }
     }         
 }
@@ -60,6 +61,7 @@ function displayanchors(columns) {
 
 // on change of anchors selection from checkbox
 function onAnchorSetChange(){    
+    //get all the checkboxes with checked as true
     eleList = document.getElementsByName("checkboxes");
     columnList = [];
     for(i=0; i<eleList.length; i++) {        
@@ -69,9 +71,10 @@ function onAnchorSetChange(){
             columnList.push(columnName);
         }
     }
+    // if number of selected checkboxes are less than 3, display warning message
     if(columnList.length < 3) {
-        d3.select("#warningmessage").remove();//removing existing warning messages
-
+        d3.select("#warningmessage").remove();//removing existing warning messages to avoid deuplicates
+        // display warning messages
         d3.select("#warningDiv")
         .append("text")
         .attr("id", "warningmessage")
@@ -95,18 +98,18 @@ function generatePlot(data) {
     columns = data.columns;
 
     anchors = [];
-    for(i=0; i<columns.length-1; i++) {
+    for(i=0; i<columns.length-1; i++) {//excluded last column because it is a class and not an anchor
         anchors.push(columns[i]);
     }
 
-    displayanchors(anchors);         
+    displayanchors(anchors); //to display checkboxes with anchors        
 
     // parse and convert strings to numbers except last column
     data.forEach(function(vector){    
         count=columns.length-1;
         for(key in vector){        
             if(count == 0){
-                CLASS_NAME = key; //assigning class name
+                CLASS_NAME = key; //storing class name to a global variable 
                 break;
             }
             vector[key] = +vector[key];        
@@ -136,15 +139,15 @@ function generatePlot(data) {
         }
         arrOriginalNormalizedVal[row] = arrVectorTemp; 
         row++;       
-    });         
-
+    });
+    
     // arrange svg canvas
     svg_container = d3.select("#svgcontainer")
                         .append("svg")
                         .attr("width", "100%")
                         .attr("height", 600);
 
-        // draw circle
+    // draw circle
     svg_container.append("circle")
                     .attr("cx", this.CIRCLE_CENTERX)
                     .attr("cy", this.CIRCLE_CENTERY)
@@ -159,7 +162,7 @@ function generatePlot(data) {
 
 // plot anchors on circle
 plotAnchors = function(columns, isDragged) {    
-    if(!isDragged) {
+    if(!isDragged) { //exclude below functionlity since this calculation is not required while dragging
         anchors_count = columns.length;
         var anchors_positions = {};
 
@@ -207,8 +210,7 @@ plotAnchors = function(columns, isDragged) {
 }
 
 // plot instances 
-this.plotInstances = function(data, anchor_positions, isDragged) {
-   
+this.plotInstances = function(data, anchor_positions, isDragged) {    
     if(!isDragged) {
         // define a unique color for each class
         classes = d3.map(data, function(d){return d[CLASS_NAME];}).keys();
@@ -222,7 +224,6 @@ this.plotInstances = function(data, anchor_positions, isDragged) {
 
     // loop through each row and plot each instance with color based on class
     row = 0;
-    
     data.forEach(function(vector){
         sum_upper_X = 0;
         sum_upper_Y = 0;
@@ -258,12 +259,16 @@ this.plotInstances = function(data, anchor_positions, isDragged) {
              .text(this.addToolTip(vector, row));
         row++;
     });    
+
+    //retain the slider opacity throughout the application  
     d3.selectAll(".plotLegend,.plotcircles").transition()
     .duration(1000)
     .ease(d3.easeLinear)
     .style("opacity", d3.select("#range1").property("value")/100)  
 
 }
+
+//changing the color opacity when using slider
 d3.select("#range1").on("input", function() {
     d3.selectAll(".plotLegend,.plotcircles").transition()
     .duration(1000)
@@ -277,14 +282,13 @@ this.addToolTip = function(vector, row) {
    arrTemp = arrOriginalNormalizedVal[row];
    i = 0;
    for(key in vector) {      
-       if(key == this.CLASS_NAME) {
+       if(key == this.CLASS_NAME) { //to create distinction between features and class attributes
            text +=  "\n";
            key = key.toUpperCase();           
        }
        text += key + ": " + arrTemp[i] + "\n";       
        i++;
-   }
-   
+   } 
    return text;
 }
 
@@ -298,17 +302,17 @@ function displayLegend(classes, dict_classes_colors) {
     for(i=0; i<classes.length; i++) {
         legendCirclePosY += 20;
         legendTextPosY += 20;
-    d3.select("svg").append("circle")
-                    .attr("cx", legendCirclePosX)
-                    .attr("cy", legendCirclePosY)
-                    .attr("r", 6)
-                    .attr("class", "plotLegend")
-                    .attr("fill", dict_classes_colors[classes[i]])
-                    .attr("stroke", "black")
-    d3.select("svg").append("text")
-                    .attr("x", legendTextPosX)
-                    .attr("y", legendTextPosY)
-                    .text(classes[i])
+        d3.select("svg").append("circle")
+                        .attr("cx", legendCirclePosX)
+                        .attr("cy", legendCirclePosY)
+                        .attr("r", 6)
+                        .attr("class", "plotLegend")
+                        .attr("fill", dict_classes_colors[classes[i]])
+                        .attr("stroke", "black")
+        d3.select("svg").append("text")
+                        .attr("x", legendTextPosX)
+                        .attr("y", legendTextPosY)
+                        .text(classes[i])
     }
 }
 
@@ -338,6 +342,8 @@ function dragging(d, i) {
                 .attr("x", newPosX + 10)
                 .attr("y", newPosY + 10);
 
+    // updating the position of dragged anchor in the dictionary 
+    // and plotting data points using the updated dictionary
     for(key in anchor_positions) {
         if(key == currentId) {
             anchor_positions[key] = [newPosX, newPosY];
