@@ -71,10 +71,12 @@ function onAnchorSetChange(){
     if(columnList.length < 3) {
         d3.select("#warningmessage").remove();//removing existing warning messages
 
-        d3.select("#svgcontainer")
+        d3.select("#warningDiv")
         .append("text")
         .attr("id", "warningmessage")
-        .text("Please select a minimum of three anchors!");
+        .text("Please select a minimum of three anchors!")
+        .style("color", "red")
+        .style("font-weight", "bold");
     }
     else {
         d3.select("#warningmessage").remove(); //removing existing warning messages
@@ -138,7 +140,7 @@ function generatePlot(data) {
     // arrange svg canvas
     svg_container = d3.select("#svgcontainer")
                         .append("svg")
-                        .attr("width", 1000)
+                        .attr("width", "100%")
                         .attr("height", 600);
 
         // draw circle
@@ -152,7 +154,6 @@ function generatePlot(data) {
     anchor_positions = this.plotAnchors(anchors, false);
     this.plotInstances(data, anchor_positions, false);
     this.addToolTip();
-    
 }
 
 // plot anchors on circle
@@ -216,6 +217,7 @@ this.plotInstances = function(data, anchor_positions, isDragged) {
         for(i=0; i<classes.length; i++) {        
             dict_classes_colors[classes[i]] = colors[i];
         }
+        displayLegend(classes, dict_classes_colors);
     }
 
     // loop through each row and plot each instance with color based on class
@@ -275,6 +277,34 @@ this.addToolTip = function(vector, row) {
    return text;
 }
 
+// to add legend displaying colors that are representing the classes
+function displayLegend(classes, dict_classes_colors) {
+    legendCirclePosX = 680;
+    legendCirclePosY = 85;
+    legendTextPosX = 690;
+    legendTextPosY = 90;
+console.log(classes);
+console.log(dict_classes_colors);
+    for(i=0; i<classes.length; i++) {
+        console.log(classes[i]);
+        legendCirclePosY += 20;
+        legendTextPosY += 20;
+    d3.select("svg").append("circle")
+                    .attr("cx", legendCirclePosX)
+                    .attr("cy", legendCirclePosY)
+                    .attr("r", 6)
+                    .attr("class", "plotLegend")
+                    .attr("fill", dict_classes_colors[classes[i]])
+                    .attr("stroke", "black")
+                    console.log(dict_classes_colors[classes[i]]);
+    d3.select("svg").append("text")
+                    .attr("x", legendTextPosX)
+                    .attr("y", legendTextPosY)
+                    .text(classes[i])
+    }
+}
+
+// to perform operations on dragging the anchor points
 function dragging(d, i) {    
     d3.select(this).raise().classed('active', true);    
    
@@ -308,3 +338,10 @@ function dragging(d, i) {
         }
     }                    
 }
+
+d3.select("#range1").on("input", function() {
+    d3.selectAll(".plotLegend,.plotcircles").transition()
+    .duration(1000)
+    .ease(d3.easeLinear)
+    .style("opacity", d3.select("#range1").property("value")/100)
+});

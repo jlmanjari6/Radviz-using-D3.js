@@ -7,11 +7,13 @@
     </head>
     <body style="margin-left: 35px;font-family: Calibri; font-size: 20px"></body>
             <div id = "svgcontainer">             
-               <b><h3>Please upload dataset to generate RadViz! </h3>
-                (winequality-red is displayed below by default!) <br><br>
+               <b><h3>Please upload dataset to generate RadViz! 
+                (winequality-red is displayed below by default!) </h3>
                <input id="fileUpload" type="file">            
                 <input id="uploadBtn" type="submit" value="Upload" onclick="onFileUploadBtnClick()"> </b>
                 <br><br>
+               Change opacity of data points: <input id ="range1" type="range" min="10" max="100" value="100" style="width: 400px; margin-right: 10px;"/>
+                <div id="warningDiv"></div>
             </div>
             <script src="https://d3js.org/d3.v5.min.js"></script>
             <script src="app.js"></script>
