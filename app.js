@@ -10,6 +10,7 @@ var arrOriginalNormalizedVal = [];
 //on dom loaded - to display RadViz for winequality-red.csv 
 document.addEventListener("DOMContentLoaded", function() {    
     d3.csv(DATASET).then(function(data) {
+        console.log(data);
         generatePlot(data); // assigning default dataset for initial upload
     });
 
